@@ -5,7 +5,6 @@
 #include "param.h"
 #include "traps.h"
 #include "spinlock.h"
-#include "sleeplock.h"
 #include "fs.h"
 #include "file.h"
 #include "mmu.h"
@@ -41,6 +40,7 @@ uartinit(void)
   // enable interrupts.
   inb(COM1+2);
   inb(COM1+0);
+  picenable(IRQ_COM1);
   ioapicenable(IRQ_COM1, 0);
 
   // Announce that we're here.

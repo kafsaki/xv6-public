@@ -38,7 +38,7 @@ acquire(struct spinlock *lk)
   __sync_synchronize();
 
   // Record info about lock acquisition for debugging.
-  lk->cpu = mycpu();
+  lk->cpu = cpu;
   getcallerpcs(&lk, lk->pcs);
 }
 
@@ -56,13 +56,11 @@ release(struct spinlock *lk)
   // past this point, to ensure that all the stores in the critical
   // section are visible to other cores before the lock is released.
   // Both the C compiler and the hardware may re-order loads and
-  // stores; __sync_synchronize() tells them both not to.
+  // stores; __sync_synchronize() tells them both to not re-order.
   __sync_synchronize();
 
-  // Release the lock, equivalent to lk->locked = 0.
-  // This code can't use a C assignment, since it might
-  // not be atomic. A real OS would use C atomics here.
-  asm volatile("movl $0, %0" : "+m" (lk->locked) : );
+  // Release the lock.
+  lk->locked = 0;
 
   popcli();
 }
@@ -89,11 +87,7 @@ getcallerpcs(void *v, uint pcs[])
 int
 holding(struct spinlock *lock)
 {
-  int r;
-  pushcli();
-  r = lock->locked && lock->cpu == mycpu();
-  popcli();
-  return r;
+  return lock->locked && lock->cpu == cpu;
 }
 
 
@@ -108,9 +102,9 @@ pushcli(void)
 
   eflags = readeflags();
   cli();
-  if(mycpu()->ncli == 0)
-    mycpu()->intena = eflags & FL_IF;
-  mycpu()->ncli += 1;
+  if(cpu->ncli == 0)
+    cpu->intena = eflags & FL_IF;
+  cpu->ncli += 1;
 }
 
 void
@@ -118,9 +112,9 @@ popcli(void)
 {
   if(readeflags()&FL_IF)
     panic("popcli - interruptible");
-  if(--mycpu()->ncli < 0)
+  if(--cpu->ncli < 0)
     panic("popcli");
-  if(mycpu()->ncli == 0 && mycpu()->intena)
+  if(cpu->ncli == 0 && cpu->intena)
     sti();
 }
 

@@ -9,7 +9,6 @@
 #include "x86.h"
 #include "traps.h"
 #include "spinlock.h"
-#include "sleeplock.h"
 #include "fs.h"
 #include "buf.h"
 
@@ -40,8 +39,8 @@ iderw(struct buf *b)
 {
   uchar *p;
 
-  if(!holdingsleep(&b->lock))
-    panic("iderw: buf not locked");
+  if(!(b->flags & B_BUSY))
+    panic("iderw: buf not busy");
   if((b->flags & (B_VALID|B_DIRTY)) == B_VALID)
     panic("iderw: nothing to do");
   if(b->dev != 1)

@@ -2,7 +2,6 @@
 #include "defs.h"
 #include "param.h"
 #include "spinlock.h"
-#include "sleeplock.h"
 #include "fs.h"
 #include "buf.h"
 
@@ -155,9 +154,7 @@ end_op(void)
     do_commit = 1;
     log.committing = 1;
   } else {
-    // begin_op() may be waiting for log space,
-    // and decrementing log.outstanding has decreased
-    // the amount of reserved space.
+    // begin_op() may be waiting for log space.
     wakeup(&log);
   }
   release(&log.lock);

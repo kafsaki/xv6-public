@@ -11,8 +11,6 @@
 #include "mmu.h"
 #include "proc.h"
 #include "fs.h"
-#include "spinlock.h"
-#include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
 
@@ -26,7 +24,7 @@ argfd(int n, int *pfd, struct file **pf)
 
   if(argint(n, &fd) < 0)
     return -1;
-  if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0)
+  if(fd < 0 || fd >= NOFILE || (f=proc->ofile[fd]) == 0)
     return -1;
   if(pfd)
     *pfd = fd;
@@ -41,11 +39,10 @@ static int
 fdalloc(struct file *f)
 {
   int fd;
-  struct proc *curproc = myproc();
 
   for(fd = 0; fd < NOFILE; fd++){
-    if(curproc->ofile[fd] == 0){
-      curproc->ofile[fd] = f;
+    if(proc->ofile[fd] == 0){
+      proc->ofile[fd] = f;
       return fd;
     }
   }
@@ -98,7 +95,7 @@ sys_close(void)
 
   if(argfd(0, &fd, &f) < 0)
     return -1;
-  myproc()->ofile[fd] = 0;
+  proc->ofile[fd] = 0;
   fileclose(f);
   return 0;
 }
@@ -241,6 +238,7 @@ bad:
 static struct inode*
 create(char *path, short type, short major, short minor)
 {
+  uint off;
   struct inode *ip, *dp;
   char name[DIRSIZ];
 
@@ -248,7 +246,7 @@ create(char *path, short type, short major, short minor)
     return 0;
   ilock(dp);
 
-  if((ip = dirlookup(dp, name, 0)) != 0){
+  if((ip = dirlookup(dp, name, &off)) != 0){
     iunlockput(dp);
     ilock(ip);
     if(type == T_FILE && ip->type == T_FILE)
@@ -373,8 +371,7 @@ sys_chdir(void)
 {
   char *path;
   struct inode *ip;
-  struct proc *curproc = myproc();
-  
+
   begin_op();
   if(argstr(0, &path) < 0 || (ip = namei(path)) == 0){
     end_op();
@@ -387,9 +384,9 @@ sys_chdir(void)
     return -1;
   }
   iunlock(ip);
-  iput(curproc->cwd);
+  iput(proc->cwd);
   end_op();
-  curproc->cwd = ip;
+  proc->cwd = ip;
   return 0;
 }
 
@@ -433,7 +430,7 @@ sys_pipe(void)
   fd0 = -1;
   if((fd0 = fdalloc(rf)) < 0 || (fd1 = fdalloc(wf)) < 0){
     if(fd0 >= 0)
-      myproc()->ofile[fd0] = 0;
+      proc->ofile[fd0] = 0;
     fileclose(rf);
     fileclose(wf);
     return -1;
