@@ -46,6 +46,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->slot = SLOT;
+  p->priority = 10;
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
@@ -272,15 +274,30 @@ void
 scheduler(void)
 {
   struct proc *p;
-
+  struct proc *temp;//
+  int priority;//
+  int needed;//
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+    // Loop over process table looking for process to run.
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      //scan for the highest priority
+      if (needed){
+        priority = 19;
+        for (temp = ptable.proc; temp < &ptable.proc[NPROC];temp++){
+          if(temp->state == RUNNABLE && temp->priority < priority)
+            priority = temp->priority;
+        }
+      }
+      needed = 0;
+
       if(p->state != RUNNABLE)
+        continue;
+    
+      if(p->priority > priority)
         continue;
 
       // Switch to chosen process.  It is the process's job
@@ -297,7 +314,7 @@ scheduler(void)
       proc = 0;
     }
     release(&ptable.lock);
-
+    needed = 1;//
   }
 }
 
@@ -466,7 +483,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("PID=%d state=%s priority=%d %s", p->pid, state, p->priority, p->name);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
@@ -474,4 +491,25 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int getcpuid()
+{
+  return cpunum();
+}
+
+int chpri(int pid, int priority)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    //acquire(&ptable.lock);
+    if(p->pid == pid){
+      p->priority = priority;
+      //release(&ptable.lock);
+      break;
+    }
+  }
+  release(&ptable.lock);
+  return pid;
 }
