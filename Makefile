@@ -162,6 +162,8 @@ UPROGS=\
 	_pcpuid\
 	_loop\
 	_prio-sched\
+	_sh_rw_nolock\
+	_sh_rw_lock\
 	_cat\
 	_echo\
 	_forktest\

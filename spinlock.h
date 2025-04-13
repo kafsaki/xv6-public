@@ -9,3 +9,12 @@ struct spinlock {
                      // that locked the lock.
 };
 
+#define SEM_MAX_NUM 128  // 信号量最大数量
+extern int sem_used_count; //当前使用的信号量数量
+struct sem{
+    struct spinlock lock;
+    int resource_count; //资源数量
+
+    int allocated; //是否分配
+};
+extern struct sem sems[SEM_MAX_NUM]; //信号量数组

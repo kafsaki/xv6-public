@@ -22,3 +22,9 @@
 #define SYS_close  21
 #define SYS_getcpuid 22
 #define SYS_chpri  23
+#define SYS_sh_var_read 24
+#define SYS_sh_var_write 25
+#define SYS_sem_create 26
+#define SYS_sem_free 27
+#define SYS_sem_p 28
+#define SYS_sem_v 29

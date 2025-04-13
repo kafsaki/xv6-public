@@ -513,3 +513,19 @@ int chpri(int pid, int priority)
   release(&ptable.lock);
   return pid;
 }
+
+void wakeup1p(void *chan)
+{
+    struct proc *p;
+    acquire(&ptable.lock);
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+            if (p->state == SLEEPING && p->chan == chan)
+            {
+                p->state = RUNNABLE;
+                break;
+            }
+        
+    }
+    release(&ptable.lock);
+}

@@ -106,3 +106,18 @@ sys_chpri(void)
     return -1;
   return chpri (pid,pr);
 }
+
+int
+sys_sh_var_read()
+{
+  return sh_var_for_sem_demo;
+}
+int sys_sh_var_write()
+{
+  int n;
+  if(argint(0, &n) < 0)
+    return -1;
+  sh_var_for_sem_demo = n;
+  return sh_var_for_sem_demo;
+}
+
