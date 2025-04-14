@@ -529,3 +529,15 @@ void wakeup1p(void *chan)
     }
     release(&ptable.lock);
 }
+
+void *myMalloc(int size){
+    int page_offset = slab_alloc(proc->pgdir, (char*)proc->sz, size);
+    uint oldsize = proc->sz; // 保存旧的 sz 值
+    proc->sz += 4096;//增加sz的值，页间间隔为4096
+    return (void*)oldsize + page_offset;
+}
+
+int myFree(void *va){
+    int res = slab_free(proc->pgdir, va);
+    return res;
+}

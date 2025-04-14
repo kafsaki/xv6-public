@@ -31,6 +31,8 @@ int sem_create(int);
 int sem_free(int);
 int sem_p(int);
 int sem_v(int);
+void* myMalloc(int size);
+int myFree(void *va);
 
 // ulib.c
 int stat(char*, struct stat*);

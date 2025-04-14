@@ -164,6 +164,7 @@ UPROGS=\
 	_prio-sched\
 	_sh_rw_nolock\
 	_sh_rw_lock\
+	_slabtest\
 	_cat\
 	_echo\
 	_forktest\

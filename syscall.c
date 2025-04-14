@@ -106,6 +106,8 @@ extern int sys_sem_create(void);
 extern int sys_sem_free(void);
 extern int sys_sem_p(void);
 extern int sys_sem_v(void);
+extern int sys_myMalloc(void);
+extern int sys_myFree(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -137,6 +139,8 @@ static int (*syscalls[])(void) = {
 [SYS_sem_free] sys_sem_free,
 [SYS_sem_p] sys_sem_p,
 [SYS_sem_v] sys_sem_v,
+[SYS_myMalloc] sys_myMalloc,
+[SYS_myFree] sys_myFree,
 };
 
 void

@@ -391,3 +391,67 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
 //PAGEBREAK!
 // Blank page.
 
+//slab
+typedef struct slab{
+    int slab_size; //size of slab
+    int  num;  //number of slab
+    char used_mask[256]; //slab status
+    void *phy_addr;  //physical address
+  }slab;
+  
+  slab slabs[8];
+  
+void slab_init(){
+    int size,i;
+    for(size=16,i=0; size<=2048; size*=2,i++){
+      slabs[i].slab_size = size;//slab size
+      slabs[i].num = 4096/size;//number of slab
+      memset(slabs[i].used_mask, 0, 256);//slab status
+      slabs[i].phy_addr = kalloc();//physical address
+      cprintf("slab size: %d, number of slab: %d, physical address: %x\n",slabs[i].slab_size,slabs[i].num,slabs[i].phy_addr);
+    }
+}
+  
+int slab_alloc(pde_t *pgdir, void *va, uint sz){
+    if(sz>2048 || sz<=0)//如果sz大于2048或者小于等于0，返回0
+      return 0;
+    int size=16,i=0;
+    while(size<sz)//找到第一个大于sz的slab
+      size*=2,i++;
+    int j;
+    for(j=0; j<slabs[i].num; j++){
+      if(slabs[i].used_mask[j]==0){//找到空闲的slab
+        slabs[i].used_mask[j]=1;//标志为已分配
+        break;
+      }
+      if(j==slabs[i].num-1)//如果没有空闲的slab
+        return 0;
+    }
+    uint pa = (uint)slabs[i].phy_addr + j*slabs[i].slab_size;//计算物理地址
+    cprintf("assign from physical address: %p\n",pa);
+    mappages(pgdir, va, 4096, V2P(pa), PTE_W|PTE_U);//映射虚拟地址到物理地址
+    return j*slabs[i].slab_size;//返回物理页的地址偏移量
+}
+
+int slab_free(pde_t *pgdir, void *va){
+    uint page_addr = (uint)uva2ka(pgdir, va);//获取起始物理地址
+    uint page_offset = (uint)va&4095;//获取物理页的地址偏移量
+    uint pa = page_addr + page_offset;//计算物理地址
+    cprintf("free from physical address: %p\n",pa);
+    int i;
+    for(i=0;i<8;i++){//遍历slabs
+        uint start=(uint)slabs[i].phy_addr;//计算slab的起始物理地址
+        uint end=start+(uint)slabs[i].slab_size*slabs[i].num;//计算slab的结束物理地址
+        if(pa>=start && pa<end){//如果物理地址在slab内
+            break;//退出循环
+        }
+    }
+    if(i==8)//如果没有找到slab
+        return 0;
+    uint offset = pa - (uint)slabs[i].phy_addr;//计算物理地址在slab内的偏移量
+    int j = offset / slabs[i].slab_size;//计算在对应大小slab中的索引
+    slabs[i].used_mask[j] = 0;//标志为未分配
+    pte_t *pte = walkpgdir(pgdir, va, 0);//获取页表项
+    *pte = (uint)0;//清除页表项
+    return 1;//返回1表示释放成功
+}

@@ -175,6 +175,13 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
 
+
+void		slab_init(void);
+int		slab_alloc(pde_t *pgdir, void *va, uint sz);
+int		slab_free(pde_t *pgdir, void *va);
+void* 		myMalloc(int size);
+int 		myFree(void *va);
+
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 

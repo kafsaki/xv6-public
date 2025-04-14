@@ -121,3 +121,18 @@ int sys_sh_var_write()
   return sh_var_for_sem_demo;
 }
 
+int sys_myMalloc(){
+    int size;
+    if(argint(0, &size) < 0) // 获取参数 size
+        return 0;
+    void * res = myMalloc(size); // 调用 myMalloc 函数分配slab
+    return (int)res; // 返回分配的内存地址
+}
+
+int sys_myFree(){
+    int va;
+    if(argint(0, &va) < 0) // 获取参数 va
+        return 0;
+    int res = myFree((void*)va); // 调用 myFree 函数释放slab
+    return res; // 返回释放结果
+}
