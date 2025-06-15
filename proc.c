@@ -182,10 +182,17 @@ exit(void)
 {
   struct proc *p;
   int fd;
+  struct proc *curproc = proc;
 
   if(proc == initproc)
     panic("init exiting");
-
+  
+  // wake pthread
+  if(curproc->parent ==0 && curproc->pthread != 0)
+    wakeup1(curproc->pthread);
+  else
+    wakeup1(curproc->parent);
+  
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
     if(proc->ofile[fd]){
@@ -581,3 +588,79 @@ int myFork(void)
   return pid;
 }
 
+//调用clone()前需要分配好线程栈的内存空间，并通过stack参数传入
+int clone(void (*fcn)(void *), void *stack, void *arg) {
+  struct proc *curproc = proc;    //记录发出clone的进程
+  struct proc *np;
+  if ((np = allocproc()) == 0)        //为新线程分配PCB/TCB
+    return -1;
+
+  np->pgdir = curproc->pgdir;     //线程间共用同一个页表
+  np->sz = curproc->sz;
+  np->pthread = curproc;          // exit时用于找到父线程并唤醒
+  np->ustack = stack;             // 设置自己的线程栈
+  np->parent = 0;
+  *(np->tf) = *(curproc->tf);    // 继承trapframe
+  int* sp = stack + 4096 -8;     // 栈指针
+  // 子线程栈初始化
+  np->tf->eip = (int)fcn;        // 修改返回地址
+  np->tf->esp = (int)sp;         // 修改栈指针
+  np->tf->ebp = (int)sp;         // 修改栈基址寄存器
+  np->tf->eax = 0;               // 线程函数返回值
+  
+  *(sp + 1) = (int)arg;         // 保存arg参数
+  *sp = 0xffffffff;             // 返回地址
+
+  // 复制文件描述符
+  for (int i = 0; i < NOFILE; i++)
+    if (curproc->ofile[i])
+      np->ofile[i] = filedup(curproc->ofile[i]);
+  np->cwd = idup(curproc->cwd);
+
+  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+  int pid = np->pid;
+
+  acquire(&ptable.lock);
+  np->state = RUNNABLE;
+  release(&ptable.lock);
+
+  // 返回新线程的pid
+  return pid;
+}
+
+
+int join(void** stack) {
+  struct proc *curproc = proc;
+  struct proc *p;
+  int havekids;
+  acquire(&ptable.lock);
+  for (;;) {
+    havekids = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->pthread != curproc)    // 判断是不是自己的子线程
+        continue;
+
+      havekids = 1;
+      if (p->state == ZOMBIE) {
+        *stack = p->ustack;
+        int pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        p->state = UNUSED;
+        p->pid = 0;
+        p->parent = 0;
+        p->pthread = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+    if (!havekids || curproc->killed) {
+      release(&ptable.lock);
+      return -1;
+    }
+    sleep(curproc, &ptable.lock);
+  }
+  return 0;
+}

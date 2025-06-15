@@ -65,6 +65,8 @@ struct proc {
   char name[16];               // Process name (debugging)
   int slot;
   int priority;
+  struct proc *pthread;		// Parent thread
+  void *ustack;			// User thread stack
 };
 #define SLOT 8
 // Process memory is laid out contiguously, low addresses first:

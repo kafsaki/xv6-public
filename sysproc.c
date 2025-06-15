@@ -140,3 +140,19 @@ int sys_myFree(){
 int sys_myFork(void){
   return myFork();
 }
+
+int sys_clone(void){
+  char* fnc;
+  char* arg;
+  char* stack;
+  argptr(0,&fnc,0);
+  argptr(1,&arg,0);
+  argptr(2,&stack,0);
+  return clone((void (*)(void *))fnc,(void*)arg,(void*)stack);
+}
+
+int sys_join(void){
+  char* stack;
+  argptr(0,&stack,0);
+  return join((void**)stack);
+}

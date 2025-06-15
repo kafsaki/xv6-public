@@ -31,3 +31,5 @@
 #define SYS_myMalloc 30
 #define SYS_myFree   31
 #define SYS_myFork   32
+#define SYS_clone    33
+#define SYS_join     34

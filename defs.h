@@ -119,6 +119,8 @@ void            wakeup(void*);
 void            yield(void);
 int		getcpuid(void);
 int 		myFork(void);
+int		clone(void(*func)(void*),void* arg,void* stack);
+int		join(void** stack);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
