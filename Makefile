@@ -165,6 +165,7 @@ UPROGS=\
 	_sh_rw_nolock\
 	_sh_rw_lock\
 	_slabtest\
+	_cowtest\
 	_cat\
 	_echo\
 	_forktest\

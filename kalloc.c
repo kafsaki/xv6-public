@@ -20,6 +20,7 @@ struct {
   struct spinlock lock;
   int use_lock;
   struct run *freelist;
+  uint pageref[PHYSTOP >> PGSHIFT];
 } kmem;
 
 // Initialization happens in two phases.
@@ -59,21 +60,25 @@ freerange(void *vstart, void *vend)
 void
 kfree(char *v)
 {
-  struct run *r;
+    struct run *r;
 
-  if((uint)v % PGSIZE || v < end || V2P(v) >= PHYSTOP)
-    panic("kfree");
+    if ((uint)v % PGSIZE || v < end || V2P(v) >= PHYSTOP)
+        panic("kfree");
 
-  // Fill with junk to catch dangling refs.
-  memset(v, 1, PGSIZE);
+    if (kmem.use_lock)
+        acquire(&kmem.lock);
 
-  if(kmem.use_lock)
-    acquire(&kmem.lock);
-  r = (struct run*)v;
-  r->next = kmem.freelist;
-  kmem.freelist = r;
-  if(kmem.use_lock)
-    release(&kmem.lock);
+    if (kmem.pageref[V2P(v) >> PGSHIFT] > 1)
+        kmem.pageref[V2P(v) >> PGSHIFT] -= 1;
+    if (kmem.pageref[V2P(v) >> PGSHIFT] == 0)
+    {
+        memset(v, 1, PGSIZE);
+        r = (struct run *)v;
+        r->next = kmem.freelist;
+        kmem.freelist = r;
+    }
+    if (kmem.use_lock)
+        release(&kmem.lock);
 }
 
 // Allocate one 4096-byte page of physical memory.
@@ -87,10 +92,28 @@ kalloc(void)
   if(kmem.use_lock)
     acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if(r){
     kmem.freelist = r->next;
+    kmem.pageref[V2P((char*)r) >> PGSHIFT] = 1;
+  }
   if(kmem.use_lock)
     release(&kmem.lock);
   return (char*)r;
+}
+
+uint pageref_get(uint pa)
+{
+    uint index = pa >> PGSHIFT; // 根据物理地址计算索引
+    acquire(&kmem.lock);
+    uint count = kmem.pageref[index]; // 获取引用计数
+    release(&kmem.lock);
+    return count;
+}
+void pageref_set(uint pa, uint delta)
+{
+    uint index = pa >> PGSHIFT; // 根据物理地址计算索引
+    acquire(&kmem.lock);
+    kmem.pageref[index]+=delta;//增加或减少引用计数
+    release(&kmem.lock);
 }
 

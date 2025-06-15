@@ -77,8 +77,8 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
   for(;;){
     if((pte = walkpgdir(pgdir, a, 1)) == 0)
       return -1;
-    if(*pte & PTE_P)
-      panic("remap");
+    //if(*pte & PTE_P)
+      //panic("remap");
     *pte = pa | perm | PTE_P;
     if(a == last)
       break;
@@ -342,6 +342,65 @@ bad:
   freevm(d);
   return 0;
 }
+
+pde_t*
+copyuvm_onwrite(pde_t *pgdir, uint sz)
+{
+  pde_t *d;
+  pte_t *pte;
+  uint pa, i, flags;
+  char *mem;
+
+  if((d = setupkvm()) == 0)
+    return 0;
+  for(i = 0; i < sz; i += PGSIZE){
+    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+      panic("copyuvm: pte should exist");
+    if(!(*pte & PTE_P))
+      panic("copyuvm: page not present");
+    if(i>=3*PGSIZE){
+      *pte = ((*pte) & (~PTE_W));
+    }
+    pa = PTE_ADDR(*pte);
+    flags = PTE_FLAGS(*pte);
+    if(i < 3*PGSIZE){//如果是前三页，直接复制
+      if((mem = kalloc()) == 0)
+      goto bad;
+      memmove(mem, (char*)P2V(pa), PGSIZE);
+      if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0)
+        goto bad;
+    }
+    else{//不是前三页，将子进程页表指向父进程页表
+        mappages(d, (void*)i, PGSIZE, pa, flags);
+        cprintf("lazy %p\n",P2V(pa));
+        pageref_set(pa,1);//引用此时设置为1
+    }
+  }
+  return d;
+
+bad:
+  freevm(d);
+  return 0;
+}
+
+void copy_on_write(pde_t *pgdir, void *va)
+{
+    pte_t *pte = walkpgdir(pgdir, va, 0);
+    uint pa = PTE_ADDR(*pte);
+    uint ref = pageref_get(pa);
+    if (ref > 1){// 引用次数大于1
+        pageref_set(pa, -1); // ref计数减1
+        char *mem = kalloc();
+        memmove(mem, (char *)P2V(pa), PGSIZE);
+        mappages(pgdir, va, PGSIZE, V2P(mem), PTE_W | PTE_U);
+        cprintf("[copy on write]: %p -> %p\n", P2V(pa), mem);
+    }
+    else{// 引用次数等于1
+        *pte = (*pte) | PTE_W; // 去掉写禁止
+        cprintf("ref=1 remove write forbidden\n");
+    }
+}
+
 
 //PAGEBREAK!
 // Map user virtual address to kernel address.

@@ -67,6 +67,8 @@ char*           kalloc(void);
 void            kfree(char*);
 void            kinit1(void*, void*);
 void            kinit2(void*, void*);
+uint		pageref_get(uint pa);
+void		pageref_set(uint pa, uint delta);
 
 // kbd.c
 void            kbdintr(void);
@@ -116,6 +118,8 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int		getcpuid(void);
+int 		myFork(void);
+
 // swtch.S
 void            swtch(struct context**, struct context*);
 
@@ -181,6 +185,8 @@ int		slab_alloc(pde_t *pgdir, void *va, uint sz);
 int		slab_free(pde_t *pgdir, void *va);
 void* 		myMalloc(int size);
 int 		myFree(void *va);
+pde_t*		copyuvm_onwrite(pde_t*, uint);
+void		copy_on_write(pde_t *pgdir, void* va);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

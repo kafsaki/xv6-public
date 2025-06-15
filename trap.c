@@ -47,6 +47,10 @@ trap(struct trapframe *tf)
   }
 
   switch(tf->trapno){
+  case T_PGFLT:
+    cprintf("pid: %d trap", proc->pid);
+    copy_on_write(proc->pgdir, (char*)(rcr2()));
+    break;
   case T_IRQ0 + IRQ_TIMER:
     if(cpunum() == 0){
       acquire(&tickslock);

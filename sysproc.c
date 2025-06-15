@@ -136,3 +136,7 @@ int sys_myFree(){
     int res = myFree((void*)va); // 调用 myFree 函数释放slab
     return res; // 返回释放结果
 }
+
+int sys_myFork(void){
+  return myFork();
+}

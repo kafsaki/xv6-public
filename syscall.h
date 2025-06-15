@@ -30,3 +30,4 @@
 #define SYS_sem_v 29
 #define SYS_myMalloc 30
 #define SYS_myFree   31
+#define SYS_myFork   32
