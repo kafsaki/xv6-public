@@ -167,6 +167,7 @@ UPROGS=\
 	_slabtest\
 	_cowtest\
 	_threadtest\
+	_changemode\
 	_cat\
 	_echo\
 	_forktest\

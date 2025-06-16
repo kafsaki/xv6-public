@@ -439,3 +439,31 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
+
+int
+sys_chmod(void) {
+char *pathname;
+int mode;
+struct inode *ip;
+if(argstr(0, &pathname)<0 || argint(1,&mode)<0) {
+  return -1;
+}
+
+begin_op();
+
+if((ip = namei(pathname)) == 0) {
+  end_op();
+  return -1;
+}
+
+ilock(ip);
+
+ip->mode = (char)mode;
+
+iupdate(ip);
+iunlock(ip);
+
+end_op();
+
+return 0;
+}

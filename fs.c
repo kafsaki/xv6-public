@@ -189,6 +189,7 @@ ialloc(uint dev, short type)
     dip = (struct dinode*)bp->data + inum%IPB;
     if(dip->type == 0){  // a free inode
       memset(dip, 0, sizeof(*dip));
+      dip->mode = 3;
       dip->type = type;
       log_write(bp);   // mark it allocated on the disk
       brelse(bp);
@@ -208,6 +209,7 @@ iupdate(struct inode *ip)
 
   bp = bread(ip->dev, IBLOCK(ip->inum, sb));
   dip = (struct dinode*)bp->data + ip->inum%IPB;
+  dip->mode = ip->mode;
   dip->type = ip->type;
   dip->major = ip->major;
   dip->minor = ip->minor;
@@ -285,6 +287,7 @@ ilock(struct inode *ip)
   if(!(ip->flags & I_VALID)){
     bp = bread(ip->dev, IBLOCK(ip->inum, sb));
     dip = (struct dinode*)bp->data + ip->inum%IPB;
+    ip->mode = dip->mode;
     ip->type = dip->type;
     ip->major = dip->major;
     ip->minor = dip->minor;
@@ -428,6 +431,7 @@ stati(struct inode *ip, struct stat *st)
 {
   st->dev = ip->dev;
   st->ino = ip->inum;
+  st->mode = ip->mode;
   st->type = ip->type;
   st->nlink = ip->nlink;
   st->size = ip->size;

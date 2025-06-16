@@ -103,6 +103,11 @@ fileread(struct file *f, char *addr, int n)
     return piperead(f->pipe, addr, n);
   if(f->type == FD_INODE){
     ilock(f->ip);
+    if((f->ip->mode&1) == 0){
+      iunlock(f->ip);
+      cprintf("ERROR: read permission error!\n");
+      return -1;
+    }
     if((r = readi(f->ip, addr, f->off, n)) > 0)
       f->off += r;
     iunlock(f->ip);
@@ -138,6 +143,12 @@ filewrite(struct file *f, char *addr, int n)
 
       begin_op();
       ilock(f->ip);
+      if((f->ip->mode&2) == 0){
+        iunlock(f->ip);
+        end_op();
+        cprintf("ERROR: write permission error!");
+        return -1;
+      }
       if ((r = writei(f->ip, addr + i, f->off, n1)) > 0)
         f->off += r;
       iunlock(f->ip);

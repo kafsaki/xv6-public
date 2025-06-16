@@ -33,3 +33,4 @@
 #define SYS_myFork   32
 #define SYS_clone    33
 #define SYS_join     34
+#define SYS_chmod    35

@@ -33,6 +33,7 @@ int sem_p(int);
 int sem_v(int);
 void* myMalloc(int size);
 int myFree(void *va);
+int chmod(const char* pathname, char mode);
 
 // ulib.c
 int stat(char*, struct stat*);
