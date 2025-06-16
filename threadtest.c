@@ -3,7 +3,7 @@
 #include "uthread.h"
 #include "user.h"
 
-volatile int global = 1;
+volatile int global = 0;
 
 int F(int n) {
   if (n <= 2)
