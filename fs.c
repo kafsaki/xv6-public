@@ -657,3 +657,29 @@ nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
 }
+
+uint balloc8(uint dev){
+    uint b,bi;
+    for(b = 0; b < sb.size; b += BPB){
+        struct buf* bp = bread(dev, BBLOCK(b,sb));
+        for(bi = 0; bi < 512 && b + bi * 8 < sb.size; bi++){
+            if(bp->data[bi] == 0){
+                bp->data[bi] = ~bp->data[bi];
+                log_write(bp);
+                brelse(bp);
+                return b+bi*8;
+            }
+        }
+        brelse(bp);
+    }
+    panic("balloc: out of blocks");
+}
+
+void bfree8(int dev, uint b){
+    uint i;
+    begin_op();
+    for(i =0; i<8; i++){
+        bfree(dev, b + i);
+    }
+    end_op();
+}

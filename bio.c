@@ -143,3 +143,22 @@ brelse(struct buf *b)
 //PAGEBREAK!
 // Blank page.
 
+void read_page_from_disk(int dev, char* va, uint blockno){
+    struct buf* b;
+    for(int i=0; i<8; i++){
+      b = bread(dev, blockno + i);
+      memmove(va + i * 512, b->data, 512);
+      brelse(b);
+    } 
+}
+  
+void write_page_to_disk(int dev, char* va, uint blockno){
+    struct buf* b;
+    for(int i=0; i<8; i++){
+        b = bget(dev, blockno + i);
+        memmove(b->data, va + i * 512, 512);
+        bwrite(b);
+        brelse(b);
+    }
+}
+

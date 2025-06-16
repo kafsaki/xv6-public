@@ -67,6 +67,7 @@ struct proc {
   int priority;
   struct proc *pthread;		// Parent thread
   void *ustack;			// User thread stack
+  uint swap_start;
 };
 #define SLOT 8
 // Process memory is laid out contiguously, low addresses first:

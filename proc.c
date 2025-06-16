@@ -152,6 +152,7 @@ fork(void)
     return -1;
   }
   np->sz = proc->sz;
+  np->swap_start = proc->sz;
   np->parent = proc;
   *np->tf = *proc->tf;
 

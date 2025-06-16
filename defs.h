@@ -197,3 +197,9 @@ void		copy_on_write(pde_t *pgdir, void* va);
 void seminit(void);
 
 int sh_var_for_sem_demo;
+
+void		read_page_from_disk(int dev, char* va, uint blockno);
+void		write_page_to_disk(int dev, char* va, uint blockno);
+uint		balloc8(uint dev);
+void		bfree8(int dev, uint b);
+void		pagefault(pde_t *pgdir, void *va, uint swap_start, uint sz);
