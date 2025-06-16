@@ -15,7 +15,7 @@ int F(int n) {
 void func(void* t_num) {
     int i;
     for(i=0;i<5;i++){
-      int num=999999;
+      int num=999999999;
       while(num--);
       global++;
       int n = 5*(int)t_num+i+2+num;
