@@ -589,7 +589,7 @@ int myFork(void)
 }
 
 //调用clone()前需要分配好线程栈的内存空间，并通过stack参数传入
-int clone(void (*fcn)(void *), void *stack, void *arg) {
+int clone(void (*fcn)(void *), void *arg, void *stack) {
   struct proc *curproc = proc;    //记录发出clone的进程
   struct proc *np;
   if ((np = allocproc()) == 0)        //为新线程分配PCB/TCB
