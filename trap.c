@@ -48,8 +48,9 @@ trap(struct trapframe *tf)
 
   switch(tf->trapno){
   case T_PGFLT:
-    cprintf("pid: %d trap", proc->pid);
-    copy_on_write(proc->pgdir, (char*)(rcr2()));
+    //cprintf("pid: %d trap", proc->pid);
+    //copy_on_write(proc->pgdir, (char*)(rcr2()));
+    pagefault(proc->pgdir, (char*)rcr2(), proc->swap_start, proc->sz);
     break;
   case T_IRQ0 + IRQ_TIMER:
     if(cpunum() == 0){

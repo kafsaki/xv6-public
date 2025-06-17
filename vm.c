@@ -258,7 +258,7 @@ int
 deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 {
   pte_t *pte;
-  uint a, pa;
+  uint a, pa, flags;
 
   if(newsz >= oldsz)
     return oldsz;
@@ -270,6 +270,7 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       a += (NPTENTRIES - 1) * PGSIZE;
     else if((*pte & PTE_P) != 0){
       pa = PTE_ADDR(*pte);
+      flags = PTE_FLAGS(*pte);
       if(pa == 0)
         panic("kfree");
       char *v = P2V(pa);
@@ -527,7 +528,7 @@ swapout(pde_t *pgdir, uint swap_start, uint sz) { // 换出一个物理页帧
     for(; a < sz; a += PGSIZE) {
       pte = walkpgdir(pgdir, (char*)a, 0);
       if((*pte  & PTE_P) && ((*pte & PTE_SWAPPED) == 0 )) { // 找到一个映射页,并且没有被换出
-        uint pa = PTE_ADDR(*pte)); 
+        uint pa = PTE_ADDR(*pte);
 
         begin_op();
         uint blockno = balloc8(1); // 申请 8 个盘块
