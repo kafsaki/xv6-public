@@ -5,7 +5,7 @@
 #define PGSIZE 4096
 
 int main(){
-    int n = 630;
+    int n = 575;
     char* mem = (char*)malloc(PGSIZE*n);
     if(mem == 0){
         printf(1,"alloc failed\n");

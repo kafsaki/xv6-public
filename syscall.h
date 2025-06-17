@@ -34,3 +34,4 @@
 #define SYS_clone    33
 #define SYS_join     34
 #define SYS_chmod    35
+#define SYS_open_fifo 36

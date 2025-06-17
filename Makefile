@@ -169,6 +169,7 @@ UPROGS=\
 	_threadtest\
 	_changemode\
 	_testswap\
+        _testfifo\
 	_cat\
 	_echo\
 	_forktest\

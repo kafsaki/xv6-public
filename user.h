@@ -34,6 +34,7 @@ int sem_v(int);
 void* myMalloc(int size);
 int myFree(void *va);
 int chmod(const char* pathname, char mode);
+int open_fifo(char*, int);
 
 // ulib.c
 int stat(char*, struct stat*);

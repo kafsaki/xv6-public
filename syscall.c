@@ -112,6 +112,7 @@ extern int sys_myFork(void);
 extern int sys_clone(void);
 extern int sys_join(void);
 extern int sys_chmod(void);
+extern int sys_open_fifo(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -149,6 +150,7 @@ static int (*syscalls[])(void) = {
 [SYS_clone] sys_clone,
 [SYS_join] sys_join,
 [SYS_chmod] sys_chmod,
+[SYS_open_fifo] sys_open_fifo,
 };
 
 void
